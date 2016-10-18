@@ -5,6 +5,7 @@
 --- Update 2016 - Adrien Bertrand:
 --- * Fix missing '>' in HTML
 --- * Fix code highlighter script source
+--- * Add average time per call column
 --- * Add script to use DataTable on the table (jQuery plugin)
 
 local io_lines      = io.lines
@@ -173,6 +174,7 @@ function dump(self, file)
   <th align="left">file:line</th>
   <th align="right">count</th>
   <th align="right">total elapsed (ms)</th>
+  <th align="right">call avg elapsed (ms)</th>
   <th align="left" class="code">line</th>
 </tr>
 </thead>
@@ -188,9 +190,14 @@ function dump(self, file)
       end
       local ln = tonumber(string_sub(l, string_find(l, ":", 1, true)+1))
       f:write(string_format([[
-<tr><td>%s</td><td align="right">%i</td><td align="right">%.3f</td>
-<td class="code"><code class="prettyprint">%s</code></td></tr>]],
-l, d[1], d[2]/1000, files[d[3]][ln]))
+<tr>
+  <td>%s</td>
+  <td align="right">%i</td>
+  <td align="right">%.3f</td>
+  <td align="right">%.3f</td>
+  <td class="code"><code class="prettyprint">%s</code></td>
+</tr>]],
+      l, d[1], d[2]/1000, (d[2]/1000)/d[1], files[d[3]][ln]))
    end
    f:write([[</tbody>
 </table>
