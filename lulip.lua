@@ -17,6 +17,7 @@ local string_find = string.find
 local string_sub = string.sub
 local string_gsub = string.gsub
 local string_format = string.format
+
 local ffi = require("ffi")
 
 ffi.cdef[[
@@ -26,7 +27,7 @@ ffi.cdef[[
     time_t tv_sec;
     time_t tv_usec;
   } timeval;
- 
+
   int gettimeofday(struct timeval* t, void* tzp);
 ]]
 
@@ -43,31 +44,24 @@ local mt = { __index = _M }
 -- new: create new profiler object
 function new(self)
    return setmetatable({
- 
       -- Time when start() and stop() were called in microseconds
-
       start_time = 0,
       stop_time = 0,
 
       -- Per line timing information
-
       lines = {},
 
       -- The current line being processed and when it was startd
-
       current_line = nil,
       current_start = 0,
 
       -- List of files to ignore. Set patterns using dont()
-
       ignore = {},
 
       -- List of short file names used as a cache
-
       short = {},
 
       -- Maximum number of rows of output data, set using maxrows()
-
       rows = 20,
    }, mt)
 end
@@ -91,10 +85,8 @@ function event(self, event, line)
    end
 
    if self.current_line ~= nil then
-      self.lines[self.current_line][1] =
-         self.lines[self.current_line][1] + 1
-      self.lines[self.current_line][2] =
-         self.lines[self.current_line][2] + (now - self.current_start)
+      self.lines[self.current_line][1] = self.lines[self.current_line][1] + 1
+      self.lines[self.current_line][2] = self.lines[self.current_line][2] + (now - self.current_start)
    end
 
    self.current_line = short .. ':' .. line
@@ -102,7 +94,7 @@ function event(self, event, line)
    if self.lines[self.current_line] == nil then
       self.lines[self.current_line] = {0, 0.0, f}
    end
-   
+
    self.current_start = gettimeofday()
 end
 
@@ -164,6 +156,7 @@ function dump(self, file)
 </script>
 <style>.code { padding-left: 20px; }</style>
 </head>
+
 <body>
 <table width="100%">
 <thead><tr><th align="left">file:line</th><th align="right">count</th>
@@ -176,7 +169,7 @@ function dump(self, file)
       if not t[j] then break end
       local l = t[j]["line"]
       local d = t[j]["data"]
-      if not files[d[3]] then 
+      if not files[d[3]] then
          files[d[3]] = readfile(d[3])
       end
       local ln = tonumber(string_sub(l, string_find(l, ":", 1, true)+1))
