@@ -1,21 +1,24 @@
--- lulip: LuaJIT line level profiler
---
--- Copyright (c) 2013 John Graham-Cumming
---
--- License: http://opensource.org/licenses/MIT 
+--- lulip: LuaJIT line level profiler
+--- Copyright (c) 2013 John Graham-Cumming
+--- License: http://opensource.org/licenses/MIT
+---
+--- Update 2016 - Adrien Bertrand:
+--- * Fix missing '>' in HTML
+--- * Fix code highlighter script source
+--- * Add script to use DataTable on the table (jQuery plugin)
 
-local io_lines = io.lines
-local io_open = io.open
-local pairs = pairs
-local print = print
-local debug = debug
-local tonumber = tonumber
-local setmetatable = setmetatable
-local table_sort = table.sort
-local table_insert = table.insert
-local string_find = string.find
-local string_sub = string.sub
-local string_gsub = string.gsub
+local io_lines      = io.lines
+local io_open       = io.open
+local pairs         = pairs
+local print         = print
+local debug         = debug
+local tonumber      = tonumber
+local setmetatable  = setmetatable
+local table_sort    = table.sort
+local table_insert  = table.insert
+local string_find   = string.find
+local string_sub    = string.sub
+local string_gsub   = string.gsub
 local string_match  = string.match
 local string_format = string.format
 
@@ -152,7 +155,11 @@ function dump(self, file)
    f:write([[
 <html>
 <head>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css">
+
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+<script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
 <style>
 #profileTable tbody td { padding: 4px 12px; }
 </style>
@@ -187,6 +194,15 @@ l, d[1], d[2]/1000, files[d[3]][ln]))
    end
    f:write([[</tbody>
 </table>
+
+<script>
+$(document).ready(function(){
+  $('#profileTable').DataTable({
+    paging: false,
+    order: [ [ 2, 'desc' ], [ 1, 'desc' ] ]
+  });
+});
+</script>
 
 </body>
 </html>]])
