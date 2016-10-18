@@ -16,6 +16,7 @@ local table_insert = table.insert
 local string_find = string.find
 local string_sub = string.sub
 local string_gsub = string.gsub
+local string_match  = string.match
 local string_format = string.format
 
 local ffi = require("ffi")
@@ -79,8 +80,7 @@ function event(self, event, line)
 
    local short = self.short[f]
    if not short then
-      local start = string_find(f, "[^/]+$")
-      self.short[f] = string_sub(f, start)
+      self.short[f] = string_match(f, '([^/]+)$')
       short = self.short[f]
    end
 
