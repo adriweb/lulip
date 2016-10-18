@@ -152,15 +152,23 @@ function dump(self, file)
    f:write([[
 <html>
 <head>
-<style>.code { padding-left: 20px; }</style>
 <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+<style>
+#profileTable tbody td { padding: 4px 12px; }
+</style>
 </head>
 
 <body>
-<table width="100%">
-<thead><tr><th align="left">file:line</th><th align="right">count</th>
-<th align="right">elapsed (ms)</th><th align="left" class="code">line</th>
-</tr></thead>
+
+<table id="profileTable" width="100%">
+<thead>
+<tr>
+  <th align="left">file:line</th>
+  <th align="right">count</th>
+  <th align="right">total elapsed (ms)</th>
+  <th align="left" class="code">line</th>
+</tr>
+</thead>
 <tbody>
 ]])
 
@@ -177,6 +185,10 @@ function dump(self, file)
 <td class="code"><code class="prettyprint">%s</code></td></tr>]],
 l, d[1], d[2]/1000, files[d[3]][ln]))
    end
-   f:write('</tbody></table></body></html>')
+   f:write([[</tbody>
+</table>
+
+</body>
+</html>]])
    f:close()
 end
