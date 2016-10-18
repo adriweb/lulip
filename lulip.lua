@@ -152,9 +152,8 @@ function dump(self, file)
    f:write([[
 <html>
 <head>
-<script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js">
-</script>
 <style>.code { padding-left: 20px; }</style>
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
 </head>
 
 <body>
