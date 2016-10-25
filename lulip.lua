@@ -10,6 +10,7 @@
 
 local io_lines      = io.lines
 local io_open       = io.open
+local io_close      = io.close
 local pairs         = pairs
 local print         = print
 local debug         = debug
@@ -22,6 +23,12 @@ local string_sub    = string.sub
 local string_gsub   = string.gsub
 local string_match  = string.match
 local string_format = string.format
+
+local __luacov_enabled__ = os.getenv("LUATESTS_DO_COVERAGE") == "1"
+local __local_luacov_runner__
+if __luacov_enabled__ then
+   __local_luacov_runner__ = require("luacov.runner")
+end
 
 local ffi = require("ffi")
 
@@ -45,6 +52,13 @@ local function gettimeofday()
 end
 
 local mt = { __index = _M }
+
+-- luacov instance
+function initLuaCov()
+   if __luacov_enabled__ then
+      __local_luacov_runner__.init()
+   end
+end
 
 -- new: create new profiler object
 function new(self)
@@ -105,6 +119,7 @@ end
 -- dont: tell the profiler to ignore files that match these patterns
 function dont(self, file)
    table_insert(self.ignore, file)
+   return self
 end
 
 -- maxrows: set the maximum number of rows of output
@@ -118,7 +133,11 @@ function start(self)
    self.start_time = gettimeofday()
    self.current_line = nil
    self.current_start = 0
-   debug.sethook(function(e,l) self:event(e, l) end, "l")
+   if __luacov_enabled__ then
+      debug.sethook(function(e,l) __local_luacov_runner__.debug_hook(e,l, 3) self:event(e, l) end, "l")
+   else
+      debug.sethook(function(e,l) self:event(e, l) end, "l")
+   end
 end
 
 -- stop: end profiling
@@ -127,8 +146,14 @@ function stop(self)
    debug.sethook()
 end
 
+local function file_exists(name)
+   local f=io_open(name,"r")
+   if f~=nil then io_close(f) return true else return false end
+end
+
 -- readfile: turn a file into an array for line-level access
 local function readfile(file)
+   if not file_exists(file) then return {} end
    local lines = {}
    local ln = 1
    for line in io_lines(file) do
