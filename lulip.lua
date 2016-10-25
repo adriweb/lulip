@@ -121,6 +121,12 @@ function dont(self, file)
    table_insert(self.ignore, file)
    return self
 end
+ignore = dont
+function ignoreFiles(self, files)
+   for _,file in pairs(files) do
+      ignore(self, file)
+   end
+end
 
 -- maxrows: set the maximum number of rows of output
 function maxrows(self, max)
