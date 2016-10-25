@@ -126,11 +126,13 @@ function ignoreFiles(self, files)
    for _,file in pairs(files) do
       ignore(self, file)
    end
+   return self
 end
 
 -- maxrows: set the maximum number of rows of output
 function maxrows(self, max)
    self.rows = max
+   return self
 end
 
 -- start: begin profiling
@@ -144,12 +146,14 @@ function start(self)
    else
       debug.sethook(function(e,l) self:event(e, l) end, "l")
    end
+   return self
 end
 
 -- stop: end profiling
 function stop(self)
    self.stop_time = gettimeofday()
    debug.sethook()
+   return self
 end
 
 local function file_exists(name)
@@ -245,4 +249,5 @@ $(document).ready(function(){
 </body>
 </html>]])
    f:close()
+   return self
 end
