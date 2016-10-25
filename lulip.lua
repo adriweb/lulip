@@ -1,12 +1,15 @@
 --- lulip: LuaJIT line level profiler
 --- Copyright (c) 2013 John Graham-Cumming
 --- License: http://opensource.org/licenses/MIT
----
+
 --- Update 2016 - Adrien Bertrand:
 --- * Fix missing '>' in HTML
 --- * Fix code highlighter script source
 --- * Add average time per call column
 --- * Add script to use DataTable on the table (jQuery plugin)
+--- * LuaCov integration (the caller calls init) with debug hook chaining
+--- * ignore func ('dont' alias), ignoreFiles func
+--- * Methods can be chained
 
 local io_lines      = io.lines
 local io_open       = io.open
