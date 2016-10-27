@@ -31,6 +31,8 @@ local __luacov_enabled__ = os.getenv("LUATESTS_DO_COVERAGE") == "1"
 local __local_luacov_runner__
 if __luacov_enabled__ then
    __local_luacov_runner__ = require("luacov.runner")
+   local params = { exclude = { "/share/lua/", "_spec" }, codefromstrings = true, deletestats = true, runreport = true }
+   __local_luacov_runner__.init(params)
 end
 
 local ffi = require("ffi")
@@ -55,13 +57,6 @@ local function gettimeofday()
 end
 
 local mt = { __index = _M }
-
--- luacov instance
-function initLuaCov()
-   if __luacov_enabled__ then
-      __local_luacov_runner__.init()
-   end
-end
 
 -- new: create new profiler object
 function new(self)
