@@ -9,12 +9,14 @@
 --- * Add script to use DataTable on the table (jQuery plugin)
 --- * LuaCov integration (the caller calls init) with debug hook chaining
 --- * ignore func ('dont' alias), ignoreFiles func
+--- * ignoreLine func / codeIgnore table
 --- * Methods can be chained
 
 local io_lines      = io.lines
 local io_open       = io.open
 local io_close      = io.close
 local pairs         = pairs
+local ipairs        = ipairs
 local print         = print
 local debug         = debug
 local tonumber      = tonumber
@@ -26,6 +28,8 @@ local string_sub    = string.sub
 local string_gsub   = string.gsub
 local string_match  = string.match
 local string_format = string.format
+
+local constRemoveMeCodeLine = '~~~!REMOVE_ME!~~~'
 
 local __luacov_enabled__ = os.getenv("LUATESTS_DO_COVERAGE") == "1"
 local __local_luacov_runner__
@@ -73,13 +77,16 @@ function new(self)
       current_start = 0,
 
       -- List of files to ignore. Set patterns using dont()
-      ignore = {},
+      ignore = { '/.luarocks/', '/busted/', '_spec' },
+
+      -- List of patters for lines to ignore.
+      codeIgnore = { '%f[%a_]assert%.' }, -- default: busted assert.*
 
       -- List of short file names used as a cache
       short = {},
 
       -- Maximum number of rows of output data, set using maxrows()
-      rows = 20,
+      rows = 30,
    }, mt)
 end
 
@@ -119,11 +126,16 @@ function dont(self, file)
    table_insert(self.ignore, file)
    return self
 end
-ignore = dont
+ignoreFile = dont
 function ignoreFiles(self, files)
    for _,file in pairs(files) do
-      ignore(self, file)
+      ignoreFile(self, file)
    end
+   return self
+end
+
+function ignoreline(self, line)
+   table_insert(self.codeIgnore, line)
    return self
 end
 
@@ -160,12 +172,19 @@ local function file_exists(name)
 end
 
 -- readfile: turn a file into an array for line-level access
-local function readfile(file)
+local function readfile(self, file)
    if not file_exists(file) then return {} end
    local lines = {}
    local ln = 1
    for line in io_lines(file) do
-      lines[ln] = string_gsub(line, "^%s*(.-)%s*$", "%1")
+      local isIgnoredLine = false
+      for _,v in ipairs(self.codeIgnore) do
+         if string_match(line, v) then
+            isIgnoredLine = true
+            break
+         end
+      end
+      lines[ln] = isIgnoredLine and constRemoveMeCodeLine or string_gsub(line, "^%s*(.-)%s*$", "%1")
       ln = ln + 1
    end
    return lines
@@ -187,31 +206,31 @@ function dump(self, file)
       return
    end
    f:write([[
-<html>
-<head>
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css">
+      <html>
+      <head>
+      <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css">
 
-<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
-<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-<script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
-<style>
-#profileTable tbody td { padding: 4px 12px; }
-</style>
-</head>
+      <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+      <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+      <script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+      <style>
+      #profileTable tbody td { padding: 4px 12px; }
+      </style>
+      </head>
 
-<body>
+      <body>
 
-<table id="profileTable" width="100%">
-<thead>
-<tr>
-  <th align="left">file:line</th>
-  <th align="right">count</th>
-  <th align="right">total elapsed (ms)</th>
-  <th align="right">call avg elapsed (ms)</th>
-  <th align="left" class="code">line</th>
-</tr>
-</thead>
-<tbody>
+      <table id="profileTable" width="100%">
+      <thead>
+      <tr>
+        <th align="left">file:line</th>
+        <th align="right">count</th>
+        <th align="right">total elapsed (ms)</th>
+        <th align="right">call avg elapsed (ms)</th>
+        <th align="left" class="code">line</th>
+      </tr>
+      </thead>
+      <tbody>
 ]])
 
    for j=1,self.rows do
@@ -219,33 +238,35 @@ function dump(self, file)
       local l = t[j]["line"]
       local d = t[j]["data"]
       if not files[d[3]] then
-         files[d[3]] = readfile(d[3])
+         files[d[3]] = readfile(self, d[3])
       end
       local ln = tonumber(string_sub(l, string_find(l, ":", 1, true)+1))
-      f:write(string_format([[
-<tr>
-  <td>%s</td>
-  <td align="right">%i</td>
-  <td align="right">%.3f</td>
-  <td align="right">%.3f</td>
-  <td class="code"><code class="prettyprint">%s</code></td>
-</tr>]],
-      l, d[1], d[2]/1000, (d[2]/1000)/d[1], files[d[3]][ln]))
+      local code = files[d[3]][ln]
+      if code ~= constRemoveMeCodeLine then
+         f:write(string_format([[
+            <tr>
+              <td>%s</td>
+              <td align="right">%i</td>
+              <td align="right">%.3f</td>
+              <td align="right">%.3f</td>
+              <td class="code"><code class="prettyprint">%s</code></td>
+            </tr>]], l, d[1], d[2]/1000, (d[2]/1000)/d[1], files[d[3]][ln]))
+      end
    end
    f:write([[</tbody>
-</table>
+            </table>
 
-<script>
-$(document).ready(function(){
-  $('#profileTable').DataTable({
-    paging: false,
-    order: [ [ 2, 'desc' ], [ 1, 'desc' ] ]
-  });
-});
-</script>
+            <script>
+            $(document).ready(function(){
+              $('#profileTable').DataTable({
+                paging: false,
+                order: [ [ 2, 'desc' ], [ 1, 'desc' ] ]
+              });
+            });
+            </script>
 
-</body>
-</html>]])
+            </body>
+            </html>]])
    f:close()
    return self
 end
