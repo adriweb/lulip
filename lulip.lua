@@ -200,8 +200,6 @@ function dump(self, file)
 
    local files = {}
 
-   if file == "?" then return end -- weird case (TODO: investigate)
-
    local f = io_open(file, "w")
    if not f then
       print("Failed to open output file " .. file)
