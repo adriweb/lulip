@@ -103,7 +103,7 @@ function event(self, event, line)
 
    local short = self.short[f]
    if not short then
-      self.short[f] = string_match(f, '([^/]+)$')
+      self.short[f] = string_match(f, '([^/]+)$') or "?"
       short = self.short[f]
    end
 
@@ -199,6 +199,8 @@ function dump(self, file)
    table_sort(t, function(a,b) return a["data"][2] > b["data"][2] end)
 
    local files = {}
+
+   if file == "?" then return end -- weird case (TODO: investigate)
 
    local f = io_open(file, "w")
    if not f then
